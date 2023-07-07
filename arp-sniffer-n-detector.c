@@ -91,17 +91,21 @@ char *get_ip_address(char *ip_addr, uint8_t ip[4])
     sprintf(ip_addr, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
     return ip_addr;
 }
+// TODO : Add the ARP Spoofing Detection Notification as of now it is just printing the alert
+//TODO : But not notifying the user, cuz it is running via sh not via bash
+//TODO : Soon to be fixed in the next version
 void spoofAlert(char *ip, char *mac)
 {
     char cmd[256];
-    printf("Alert !!\n");
-    sprintf(cmd, "/usr/bin/notify-send -t 5000 -i face-angry \"ARP Spoofing Detected. IP: %s and MAC: %s\"", ip, mac);
+    printf("Alert !! Possible ARP Spoofing Detected\n");
+    sprintf(cmd, "/bin/bash /home/praveen/Desktop/Backup/developer/WebD/Developer/arp-sniffer-n-detector/notify.sh && notify-send -t 5000 -i face-angry \"ARP Spoofing Detected. IP: %s and MAC: %s\"", ip, mac);
     system(cmd);
 }
 void spoofWelcome()
 {
     char cmd[256];
-    sprintf(cmd, "/usr/bin/notify-send -t 5000 -i face-angel \"I am Watching for ARP Spoofing. Sit Back and Relax.\"");
+    system("ARP Sniffer and Detector Tool started Successfully");
+    sprintf(cmd, " /bin/bash /home/praveen/Desktop/Backup/developer/WebD/Developer/arp-sniffer-n-detector/notify.sh && notify-send -t 5000 -i face-angel \"I am Watching for ARP Spoofing. Sit Back and Relax.\"");
     printf("%s", cmd);
     system(cmd);
 }
@@ -118,7 +122,7 @@ int sniffARP(char *interface)
     char *sender_mac, *sender_ip, *target_mac, *target_ip;
     int counter = 0;
     time_t start, end;
-    long int diff;
+    long int diff = 0;
 
     pack_descr = pcap_open_live(device_name, BUFSIZ, 0, 1, error);
     if (pack_descr == NULL)
@@ -140,7 +144,7 @@ int sniffARP(char *interface)
         eptr = (struct ether_header *)packet;
         if (ntohs(eptr->ether_type) == ETHERTYPE_ARP)
         {
-            start = time(NULL) / 3600; // will give epoch seconds
+            start = time(NULL); // will give epoch seconds
             diff = start - end;
             if (diff > 20)
             {
@@ -166,7 +170,7 @@ int sniffARP(char *interface)
             printf("Target IP Address: %s\n", target_ip);
             printf("--------------------==[ End of Packet  ]==--------------------\n\n");
             counter++;
-            end = time(NULL) / 3600; // will give epoch seconds
+            end = time(NULL); // will give epoch seconds
             if (counter > 10)
             {
                 spoofAlert(sender_ip, sender_mac);
@@ -177,7 +181,7 @@ int sniffARP(char *interface)
 int main(int argc, char *argv[])
 {
     printf("___  ____________   ___________ _____  ___________ ___________  \n\n");
-    spoofAlert("ip", "mac");
+    spoofWelcome();
     if (access("/usr/bin/notify-send", F_OK) == -1)
     {
         print_version();
